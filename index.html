@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHARMA ELECTRICAL</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#f1f4f9;color:#182235}
+header{background:#102b50;color:white;padding:24px 16px;text-align:center}
+header h1{margin:0;font-size:26px}
+header p{margin:8px 0 0}
+nav{display:flex;justify-content:center;gap:10px;padding:12px;background:white}
+button{border:0;border-radius:8px;padding:12px 18px;background:#1265c8;color:white;font-weight:bold}
+nav button{background:#102b50}
+main{max-width:600px;margin:20px auto;padding:16px}
+.card{background:white;padding:20px;border-radius:14px;margin-bottom:16px;box-shadow:0 3px 12px #0001}
+h2{color:#102b50;margin-top:0}
+input,textarea,select{width:100%;padding:13px;margin:8px 0 14px;border:1px solid #ccd3df;border-radius:7px;font-size:16px}
+label{font-weight:bold}
+.full{width:100%}
+.service{padding:12px;background:#edf4ff;border-radius:8px;margin:8px 0}
+.small{font-size:13px;color:#65748a}
+.booking{border:1px solid #ddd;padding:12px;border-radius:9px;margin:12px 0}
+.hidden{display:none}
+footer{text-align:center;padding:20px;color:#65748a}
+</style>
+</head>
+<body>
+
+<header>
+<h1>⚡ SHARMA ELECTRICAL</h1>
+<p>Electrical Repairing | House Wiring | Installation</p>
+<p>Pathara Budhram | Mo: 9742830301</p>
+</header>
+
+<nav>
+<button onclick="showPage('home')">Home</button>
+<button onclick="showPage('booking')">Booking</button>
+<button onclick="showPage('admin')">Admin</button>
+</nav>
+
+<main>
+<section id="home">
+<div class="card">
+<h2>Welcome to SHARMA ELECTRICAL</h2>
+<p>Your trusted electrical service provider.</p>
+<div class="service">⚡ House Wiring</div>
+<div class="service">🔧 Electrical Repairing</div>
+<div class="service">💡 Fan, Light & Switch Installation</div>
+<div class="service">⚙️ Motor & Pump Repairing</div>
+<button class="full" onclick="showPage('booking')">Book a Service</button>
+</div>
+</section>
+
+<section id="booking" class="hidden">
+<div class="card">
+<h2>Book Electrical Service</h2>
+<form id="bookingForm">
+<label>Customer Name</label>
+<input id="customerName" required placeholder="Enter your name">
+<label>Mobile Number</label>
+<input id="phone" type="tel" required placeholder="Enter mobile number">
+<label>Address</label>
+<textarea id="address" required placeholder="Your full address"></textarea>
+<label>Select Service</label>
+<select id="service" required>
+<option value="">Choose Service</option>
+<option>House Wiring</option>
+<option>Electrical Repairing</option>
+<option>Fan / Light Installation</option>
+<option>Motor / Pump Repairing</option>
+<option>Other Electrical Work</option>
+</select>
+<label>Work Details</label>
+<textarea id="details" placeholder="Describe your electrical problem"></textarea>
+<button class="full" type="submit">Submit Booking</button>
+</form>
+<p id="bookingMessage"></p>
+</div>
+</section>
+
+<section id="admin" class="hidden">
+<div class="card">
+<h2>Admin Login</h2>
+<form id="loginForm">
+<label>Admin Email</label>
+<input id="adminEmail" type="email" required placeholder="Admin email">
+<label>Password</label>
+<input id="adminPassword" type="password" required placeholder="Admin password">
+<button class="full" type="submit">Login</button>
+</form>
+<p id="loginMessage"></p>
+</div>
+<div id="dashboard" class="card hidden">
+<h2>Admin Dashboard</h2>
+<p>Customer Bookings</p>
+<button onclick="loadBookings()">Refresh Bookings</button>
+<div id="bookingList"></div>
+<button onclick="logout()" style="background:#b52b35">Logout</button>
+</div>
+</section>
+</main>
+
+<footer>
+SHARMA ELECTRICAL © 2026
+<p>Pathara Budhram | Nepal</p>
+</footer>
+
+<script type="module">
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+ getFirestore, collection, addDoc, getDocs,
+ query, orderBy, updateDoc, doc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+ getAuth, signInWithEmailAndPassword, signOut,
+ onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// REPLACE THESE VALUES WITH YOUR FIREBASE CONFIG
+const firebaseConfig = {
+ apiKey: "YOUR_API_KEY",
+ authDomain: "YOUR_PROJECT.firebaseapp.com",
+ projectId: "YOUR_PROJECT_ID",
+ storageBucket: "YOUR_PROJECT.appspot.com",
+ messagingSenderId: "YOUR_SENDER_ID",
+ appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+window.showPage = function(page){
+ document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+ document.getElementById(page).classList.remove("hidden");
+};
+
+document.getElementById("bookingForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const msg=document.getElementById("bookingMessage");
+ try{
+  await addDoc(collection(db,"bookings"),{
+   name:document.getElementById("customerName").value.trim(),
+   phone:document.getElementById("phone").value.trim(),
+   address:document.getElementById("address").value.trim(),
+   service:document.getElementById("service").value,
+   details:document.getElementById("details").value.trim(),
+   status:"Pending",
+   createdAt:serverTimestamp()
+  });
+  msg.textContent="Booking submitted successfully!";
+  e.target.reset();
+ }catch(error){
+  msg.textContent="Booking failed. Please try again.";
+  console.error(error);
+ }
+});
+
+document.getElementById("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const msg=document.getElementById("loginMessage");
+ try{
+  await signInWithEmailAndPassword(
+   auth,
+   document.getElementById("adminEmail").value,
+   document.getElementById("adminPassword").value
+  );
+  msg.textContent="Login successful";
+ }catch(error){
+  msg.textContent="Login failed. Check your email and password.";
+ }
+});
+
+onAuthStateChanged(auth,user=>{
+ document.getElementById("dashboard").classList.toggle("hidden",!user);
+ if(user) loadBookings();
+});
+
+window.loadBookings=async function(){
+ const list=document.getElementById("bookingList");
+ list.textContent="Loading...";
+ try{
+  const q=query(collection(db,"bookings"),orderBy("createdAt","desc"));
+  const result=await getDocs(q);
+  list.innerHTML="";
+  if(result.empty){list.textContent="No bookings yet.";return;}
+  result.forEach(item=>{
+   const b=item.data();
+   const div=document.createElement("div");
+   div.className="booking";
+   const heading=document.createElement("h3");
+   heading.textContent=b.name;
+   div.appendChild(heading);
+   [ "Mobile: "+b.phone, "Address: "+b.address,
+     "Service: "+b.service, "Details: "+(b.details||"None"),
+     "Status: "+b.status
+   ].forEach(t=>{
+    const p=document.createElement("p");
+    p.textContent=t;
+    div.appendChild(p);
+   });
+   const select=document.createElement("select");
+   ["Pending","Accepted","Completed"].forEach(status=>{
+    const option=document.createElement("option");
+    option.value=status;
+    option.textContent=status;
+    option.selected=status===b.status;
+    select.appendChild(option);
+   });
+   select.addEventListener("change",async()=>{
+    try{
+     await updateDoc(doc(db,"bookings",item.id),{status:select.value});
+     alert("Status updated");
+    }catch(error){alert("Update failed");}
+   });
+   div.appendChild(select);
+   list.appendChild(div);
+  });
+ }catch(error){
+  list.textContent="Could not load bookings. Check Firebase setup.";
+ }
+};
+
+window.logout=async function(){
+ await signOut(auth);
+ document.getElementById("bookingList").innerHTML="";
+};
+</script>
+</body>
+</html>
